@@ -32,13 +32,13 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-export default function KeyFinder() {
+export default function Metronome() {
   const classes = useStyles();
 
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
-      <p>Key Finder</p>
+      <p>Metronome</p>
     </Container>
   );
 }

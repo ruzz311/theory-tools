@@ -5,8 +5,16 @@ import {
 } from "react-router-dom";
 
 import { AuthProvider, RequireAuth } from "./auth";
-import Layout from './Layout';
+import Layout from './components/Layout';
+
+// Pages
 import Login from "./pages/Login";
+import KeyFinder from "./pages/KeyFinder";
+import Tuner from "./pages/Tuner";
+import Metronome from "./pages/Metronome";
+
+const PublicPage = () => <h3>Public</h3>;
+const ProtectedPage = () => <h3>Protected</h3>;
 
 export default function App() {
   return (
@@ -15,6 +23,9 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<PublicPage />} />
           <Route path="/login" element={<Login/>} />
+          <Route path="/key-finder" element={<KeyFinder/>} />
+          <Route path="/metronome" element={<Metronome/>} />
+          <Route path="/tuner" element={<Tuner/>} />
           <Route
             path="/protected"
             element={
@@ -27,13 +38,4 @@ export default function App() {
       </Routes>
     </AuthProvider>
   );  
-}
-
-
-function PublicPage() {
-  return <h3>Public</h3>;
-}
-
-function ProtectedPage() {
-  return <h3>Protected</h3>;
 }

@@ -37,35 +37,54 @@ export interface AuthContextType {
   signout: (callback: VoidFunction) => void;
 }
 
-let AuthContext = React.createContext<AuthContextType>(null!);
+// Auth context used by the AuthProvider
+const AuthContext = React.createContext<AuthContextType>(null!);
 
+/**
+ * App Access to the AuthContext Provider.  
+ * NOTE: This might have to change slightly if the faked provider is too simple.
+ * 
+ * @param param0 
+ * @returns 
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  let [user, setUser] = React.useState<any>(null);
+  const [user, setUser] = React.useState<any>(null);
 
-  let signin = (newUser: string, callback: VoidFunction) => {
+  const signin = (newUser: string, callback: VoidFunction) => {
     return fakeAuthProvider.signin(() => {
       setUser(newUser);
       callback();
     });
   };
 
-  let signout = (callback: VoidFunction) => {
+  const signout = (callback: VoidFunction) => {
     return fakeAuthProvider.signout(() => {
       setUser(null);
       callback();
     });
   };
 
-  let value = { user, signin, signout };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{user, signin, signout}}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * useAuth Hook to access auth context within components
+ * @returns 
+ */
 export const useAuth = () => React.useContext(AuthContext);
 
+/**
+ * Auth Status
+ * 
+ * @returns 
+ */
 export function AuthStatus() {
-  let auth = useAuth();
-  let navigate = useNavigate();
+  const auth = useAuth();
+  const navigate = useNavigate();
+
+  const signOut = () => {
+    auth.signout(() => navigate("/login"));
+  }
 
   if (!auth.user) {
     return (
@@ -79,17 +98,20 @@ export function AuthStatus() {
   return (
     <p>
       Welcome {auth.user}!{" "}
-      <button
-        onClick={() => {
-          auth.signout(() => navigate("/"));
-        }}
-      >
+      <button onClick={signOut}>
         Sign out
       </button>
     </p>
   );
 }
 
+/**
+ * RequireAuth is to be used to wrap around other components.  If user is logged in, children 
+ * are displayed but if the user is not logged in, react-router will redirect to the login page.
+ * 
+ * @param children - child elements to show if user is authenticated. 
+ * @returns 
+ */
 export function RequireAuth({ children }: { children: JSX.Element }) {
   let auth = useAuth();
   let location = useLocation();

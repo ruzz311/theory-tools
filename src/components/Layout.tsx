@@ -30,13 +30,12 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon
 } from '@material-ui/icons';
-
 import {
   Link,
   Outlet,
 } from "react-router-dom";
 
-import { AuthStatus, useAuth } from "./auth";
+import { AuthStatus, useAuth } from "../auth";
 
 const drawerWidth = 200;
 
@@ -177,9 +176,9 @@ export default function Layout() {
                 </ListItem>
                 <Divider />
                 {LinksList([
-                    { text: 'Tuner', url: '/', icon: <TuneIcon />, isPublic: true },
-                    { text: 'Metronome', url: '/', icon: <TimerIcon />, isPublic: true },
-                    { text: 'Key Finder', url: '/', icon: <SearchIcon />, isPublic: true },
+                    { text: 'Tuner', url: '/tuner', icon: <TuneIcon />, isPublic: true },
+                    { text: 'Metronome', url: '/metronome', icon: <TimerIcon />, isPublic: true },
+                    { text: 'Key Finder', url: '/key-finder', icon: <SearchIcon />, isPublic: true },
                     { text: 'Starred', url: '/protected', icon: <StarIcon />, isPublic: false },
                 ])}
                 <Divider />
