@@ -22,12 +22,15 @@ import ListItemText from "@material-ui/core/ListItemText";
 import {
   Menu as MenuIcon,
   Delete as DeleteIcon,
-  Inbox as InboxIcon,
-  Mail as MailIcon,
+  Search as SearchIcon,
+  Timer as TimerIcon,
   Star as StarIcon,
+  Tune as TuneIcon,
+  BugReport as BugReportIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon
 } from '@material-ui/icons';
+
 import {
   Link,
   Outlet,
@@ -100,11 +103,6 @@ const LinksList: (data: { text: string, url: string, icon: unknown, isPublic?: b
     const filteredData = data.filter(d => (!d.isPublic && auth.user) || d.isPublic);
     return (
         <List>
-            <ListItem>
-                <Typography component="p" variant="subtitle2">
-                    <AuthStatus />
-                </Typography>
-            </ListItem>
             {
                 filteredData.map(({ text, url, icon }, index: number) =>
                     <Link to={url} key={`link_${text}_${index}`}>
@@ -172,17 +170,22 @@ export default function Layout() {
                     </IconButton>
                 </div>
                 <Divider />
+                <ListItem>
+                    <Typography component="p" variant="subtitle2">
+                        <AuthStatus />
+                    </Typography>
+                </ListItem>
+                <Divider />
                 {LinksList([
-                    { text: 'Tuner', url: '/', icon: <InboxIcon />, isPublic: true },
-                    { text: 'Metronome', url: '/', icon: <InboxIcon />, isPublic: true },
-                    { text: 'Key Finder', url: '/', icon: <InboxIcon />, isPublic: true },
+                    { text: 'Tuner', url: '/', icon: <TuneIcon />, isPublic: true },
+                    { text: 'Metronome', url: '/', icon: <TimerIcon />, isPublic: true },
+                    { text: 'Key Finder', url: '/', icon: <SearchIcon />, isPublic: true },
                     { text: 'Starred', url: '/protected', icon: <StarIcon />, isPublic: false },
                 ])}
                 <Divider />
                 {LinksList([
-                    { text: 'Log In', url: '/login', icon: <MailIcon />, isPublic: true },
                     { text: 'Trash', url: '/protected', icon: <DeleteIcon />, isPublic: false },
-                    { text: 'Spam', url: '/', icon: <InboxIcon />, isPublic: true },
+                    { text: 'Spam', url: '/', icon: <BugReportIcon />, isPublic: true },
                 ])}
             </Drawer>
 

@@ -3,6 +3,7 @@ import {
   useNavigate,
   useLocation,
   Navigate,
+  Link
 } from "react-router-dom";
 
 /***************************************************************************************
@@ -67,7 +68,12 @@ export function AuthStatus() {
   let navigate = useNavigate();
 
   if (!auth.user) {
-    return <p>You are not logged in.</p>;
+    return (
+      <>
+        <p>You are not logged in.</p>
+        <Link to="/login">Login</Link>
+      </>
+    );
   }
 
   return (
