@@ -1,200 +1,176 @@
-import React from "react";
-import clsx from "clsx";
-import {
-    makeStyles,
-    useTheme,
-    Theme,
-    createStyles
-} from "@material-ui/core/styles";
-// import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Drawer from "@material-ui/core/Drawer";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import CssBaseline from "@material-ui/core/CssBaseline";
-import List from "@material-ui/core/List";
-import Typography from "@material-ui/core/Typography";
-import Divider from "@material-ui/core/Divider";
-import IconButton from "@material-ui/core/IconButton";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-import {
-  Menu as MenuIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Timer as TimerIcon,
-  Star as StarIcon,
-  Tune as TuneIcon,
-  BugReport as BugReportIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon
-} from '@material-ui/icons';
-import {
-  Link,
-  Outlet,
-} from "react-router-dom";
+import { useState } from 'react';
+import { styled, useTheme } from '@mui/material/styles';
+import MuiDrawer from '@mui/material/Drawer';
+import Box from '@mui/material/Box';
+import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import List from '@mui/material/List';
+import Typography from '@mui/material/Typography';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import Badge from '@mui/material/Badge';
+import Container from '@mui/material/Container';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import { Outlet } from 'react-router-dom';
 
-import { AuthStatus, useAuth } from "../auth";
+import { mainListItems, secondaryListItems } from './LayoutListItems';
+import { useAuth } from '../auth';
+import Copyright from './Copyright';
+import UserAvatarMenu from './user/UserAvatarMenu';
 
-const drawerWidth = 200;
+const drawerWidth: number = 240;
 
-const useStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            display: "flex"
+interface AppBarProps extends MuiAppBarProps {
+  open?: boolean;
+}
+
+/**
+ * Styled MUI App bar
+ * @returns
+ */
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<AppBarProps>(({ theme, open }) => ({
+  zIndex: theme.zIndex.drawer + 1,
+  transition: theme.transitions.create(['width', 'margin'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  ...(open && {
+    marginLeft: drawerWidth,
+    width: `calc(100% - ${drawerWidth}px)`,
+    transition: theme.transitions.create(['width', 'margin'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  }),
+}));
+
+/**
+ * Styled Main layout drawr.
+ * @returns
+ */
+const Drawer = styled(MuiDrawer, {
+  shouldForwardProp: (prop) => prop !== 'open'
+})(
+  ({ theme, open }) => ({
+    '& .MuiDrawer-paper': {
+      position: 'relative',
+      whiteSpace: 'nowrap',
+      width: drawerWidth,
+      transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      boxSizing: 'border-box',
+      ...(!open && {
+        overflowX: 'hidden',
+        transition: theme.transitions.create('width', {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.leavingScreen,
+        }),
+        width: theme.spacing(7),
+        [theme.breakpoints.up('sm')]: {
+          width: theme.spacing(9),
         },
-        bottomNavBar: {
-            width: 200
-        },
-        appBar: {
-            transition: theme.transitions.create(["margin", "width"], {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.leavingScreen
-            })
-        },
-        appBarShift: {
-            width: `calc(100% - ${drawerWidth}px)`,
-            transition: theme.transitions.create(["margin", "width"], {
-                easing: theme.transitions.easing.easeOut,
-                duration: theme.transitions.duration.enteringScreen
-            }),
-            marginLeft: drawerWidth
-        },
-        title: {
-            flexGrow: 1,
-            display: "flex",
-            alignItems: "center"
-        },
-        hide: {
-            display: "none"
-        },
-        drawer: {
-            width: drawerWidth,
-            flexShrink: 0
-        },
-        drawerPaper: {
-            width: drawerWidth
-        },
-        drawerHeader: {
-            display: "flex",
-            alignItems: "center",
-            padding: theme.spacing(0, 1),
-            // necessary for content to be below app bar
-            ...theme.mixins.toolbar,
-            justifyContent: "flex-end"
-        },
-        content: {
-            marginTop: theme.spacing(4),
-            flexGrow: 1,
-            padding: theme.spacing(3),
-            transition: theme.transitions.create("margin", {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.leavingScreen
-            })
-        }
-    })
+      }),
+    },
+  }),
 );
 
-
-const LinksList: (data: { text: string, url: string, icon: unknown, isPublic?: boolean }[]) => JSX.Element = (data) => {
-    let auth = useAuth();
-    const filteredData = data.filter(d => (!d.isPublic && auth.user) || d.isPublic);
-    return (
-        <List>
-            {
-                filteredData.map(({ text, url, icon }, index: number) =>
-                    <Link to={url} key={`link_${text}_${index}`}>
-                        <ListItem button key={`button_${text}_${index}`}>
-                            <ListItemIcon>{icon}</ListItemIcon>
-                            <ListItemText primary={text} />
-                        </ListItem>
-                    </Link>
-                )
-            }
-        </List>
-    )
-};
-
+/**
+ * Main Layout
+ * @returns 
+ */
 export default function Layout() {
-    const classes = useStyles();
-    const theme = useTheme();
-    const [open, setOpen] = React.useState(false);
+  const theme = useTheme();
+  const notificationCount = 4;
+  const drawerNavOpen = localStorage.getItem('drawerNavOpen');
+  const auth = useAuth();
+  const [open, setOpen] = useState(drawerNavOpen?.length ? drawerNavOpen === "true" : true);
 
-    const handleDrawerOpen = () => setOpen(true);
-    const handleDrawerClose = () => setOpen(false);
+  const toggleDrawer = () => {
+    localStorage.setItem('drawerNavOpen', `${!open}`);
+    setOpen(!open);
+  };
 
-    return (
-        <div className={classes.root}>
-            <CssBaseline />
-
-            <AppBar
-                position="fixed"
-                className={clsx(classes.appBar, {
-                    [classes.appBarShift]: open
-                })}
-            >
-                <Toolbar>
-                    <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        edge="start"
-                        onClick={handleDrawerOpen}
-                        className={clsx(open && classes.hide)}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                    <Typography variant="h6" noWrap className={classes.title}>
-                        &nbsp; 🎸 Music Tools
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-
-            <Drawer
-                className={classes.drawer}
-                variant="temporary"
-                anchor="left"
-                open={open}
-                classes={{
-                    paper: classes.drawerPaper
-                }}
-            >
-                <div className={classes.drawerHeader}>
-                    <IconButton onClick={handleDrawerClose}>
-                        {theme.direction === "rtl" ? (
-                            <ChevronRightIcon />
-                        ) : (
-                            <ChevronLeftIcon />
-                        )}
-                    </IconButton>
-                </div>
-                <Divider />
-                <ListItem>
-                    <Typography component="p" variant="subtitle2">
-                        <AuthStatus />
-                    </Typography>
-                </ListItem>
-                <Divider />
-                {LinksList([
-                    { text: 'Tuner', url: '/tuner', icon: <TuneIcon />, isPublic: true },
-                    { text: 'Metronome', url: '/metronome', icon: <TimerIcon />, isPublic: true },
-                    { text: 'Key Finder', url: '/key-finder', icon: <SearchIcon />, isPublic: true },
-                    { text: 'Starred', url: '/protected', icon: <StarIcon />, isPublic: false },
-                ])}
-                <Divider />
-                {LinksList([
-                    { text: 'Trash', url: '/protected', icon: <DeleteIcon />, isPublic: false },
-                    { text: 'Spam', url: '/', icon: <BugReportIcon />, isPublic: true },
-                ])}
-            </Drawer>
-
-            <Grid container direction="column" justifyContent="center" alignItems="center">
-                <Grid item>
-                    <main className={clsx(classes.content)}>
-                        <Outlet />
-                    </main>
-                </Grid>
-            </Grid>
-        </div>
-    );
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <AppBar position="absolute" open={open}>
+        <Toolbar
+          sx={{
+            pdr: '214px', // keep right padding when drawer closed
+          }}
+        >
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="open drawer"
+            onClick={toggleDrawer}
+            sx={{
+              marginRight: '36px',
+              ...(open && { display: 'none' }),
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography
+            component="h1"
+            variant="h6"
+            color="inherit"
+            noWrap
+            sx={{ flexGrow: 1 }}
+          >
+            Music Tools
+          </Typography>
+          {auth.user &&
+            <IconButton color="inherit">
+              <Badge badgeContent={notificationCount} color="secondary">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          }
+          <UserAvatarMenu />
+        </Toolbar>
+      </AppBar>
+      <Drawer variant="permanent" open={open}>
+        <Toolbar
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            px: [1],
+          }}
+        >
+          <IconButton onClick={toggleDrawer}>
+            <ChevronLeftIcon />
+          </IconButton>
+        </Toolbar>
+        <Divider />
+        <List component="nav">
+          {mainListItems()}
+          <Divider sx={{ my: 1 }} />
+          {secondaryListItems()}
+        </List>
+      </Drawer>
+      <Box
+        component="main"
+        sx={{
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'light'
+              ? theme.palette.grey[100]
+              : theme.palette.grey[900],
+          flexGrow: 1,
+          height: '100vh',
+          overflow: 'auto',
+        }}
+      >
+        {/* Page Conent Outlet: main-outlet */}
+        <Outlet key={'main-outlet'} />
+        <Copyright sx={{ pt: 4 }} />
+      </Box>
+    </Box>
+  );
 }

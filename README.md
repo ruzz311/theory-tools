@@ -23,3 +23,12 @@ or:
 ## The idea behind the example
 
 This example demonstrates how you can use [Create React App](https://github.com/facebookincubator/create-react-app) with [TypeScript](https://github.com/Microsoft/TypeScript).
+
+
+## NOTES
+
+start with 
+
+```
+npm install --save typescript react react-scripts @autho0/auth0-react react-dom react-router-dom music-fns @types/react @types/auth0-react @types/react-dom @types/react-router-dom
+```

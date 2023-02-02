@@ -1,9 +1,11 @@
 import * as React from "react";
+import { Fragment } from "react";
+import { Button } from "@mui/material";
 import {
   useNavigate,
   useLocation,
   Navigate,
-  Link
+  Link as RouterLink
 } from "react-router-dom";
 
 /***************************************************************************************
@@ -31,6 +33,7 @@ export const fakeAuthProvider = {
  * AUTH PROVIDER
  */
 
+
 export interface AuthContextType {
   user: any;
   signin: (user: string, callback: VoidFunction) => void;
@@ -43,7 +46,6 @@ const AuthContext = React.createContext<AuthContextType>(null!);
 /**
  * App Access to the AuthContext Provider.  
  * NOTE: This might have to change slightly if the faked provider is too simple.
- * 
  * @param param0 
  * @returns 
  */
@@ -64,8 +66,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  return <AuthContext.Provider value={{user, signin, signout}}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, signin, signout }}>{children}</AuthContext.Provider>;
 }
+
 
 /**
  * useAuth Hook to access auth context within components
@@ -74,34 +77,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export const useAuth = () => React.useContext(AuthContext);
 
 /**
- * Auth Status
- * 
+ * Simple auth status wiht login actions
  * @returns 
  */
 export function AuthStatus() {
   const auth = useAuth();
   const navigate = useNavigate();
-
   const signOut = () => {
     auth.signout(() => navigate("/login"));
   }
 
   if (!auth.user) {
     return (
-      <>
+      <Fragment>
         <p>You are not logged in.</p>
-        <Link to="/login">Login</Link>
-      </>
+        <Button component={RouterLink} to="/login">Login</Button>
+      </Fragment>
     );
   }
 
   return (
-    <p>
-      Welcome {auth.user}!{" "}
-      <button onClick={signOut}>
-        Sign out
-      </button>
-    </p>
+    <Fragment>
+      <p>Welcome {auth.user}!{" "}</p>
+      <Button onClick={signOut}>Sign out</Button>
+    </Fragment>
   );
 }
 

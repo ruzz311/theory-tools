@@ -1,22 +1,17 @@
-import red from "@material-ui/core/colors/red";
-import { createTheme } from "@material-ui/core/styles";
+import { createTheme, ThemeOptions } from "@mui/material/styles";
 
-// A custom theme for this app
-const theme = createTheme({
+export const getSystemUiMode = () => window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+export const themeOptions: ThemeOptions = {
   palette: {
-    primary: {
-      main: "#005EB6"
-    },
-    secondary: {
-      main: "#19857b"
-    },
-    error: {
-      main: red.A400
-    },
-    background: {
-      default: "#fff"
-    }
+    mode: getSystemUiMode(),
+    // primary: {
+    //   main: '#3f51b5',
+    // },
+    // secondary: {
+    //   main: '#f50057',
+    // },
   }
-});
+}
 
-export default theme;
+export default createTheme(themeOptions);
