@@ -46,7 +46,7 @@ export default function App() {
               <Route path='/' element={<PublicPage />} />
               <Route path='/login' element={<Login />} />
               <Route path='/key-finder' element={<KeyFinder />} />
-              <Route path='/metronome' element={<Metronome />} />
+              <Route path='/metronome' element={<AudioProvider><Metronome /></AudioProvider>} />
               <Route path='/tuner' element={<AudioProvider><Tuner /></AudioProvider>} />
               <Route path='/protected' element={<RequireAuth><ProtectedPage /></RequireAuth>}
               />
