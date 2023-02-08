@@ -1,16 +1,20 @@
 export interface OnMetronomeTickProps {
-    note: number; 
-    beatNumber: number, 
-    beatsPerBar: number;
-    time: number;
+  note: number;
+  beatNumber: number;
+  beatsPerBar: number;
+  time: number;
 }
 
 export interface MetronomeOptions {
   audioCtx: AudioContext;
   beatsPerBar?: number;
+  emphasizedBeats?: number[];
   onTick?: (data: OnMetronomeTickProps) => unknown;
 }
 
+/**
+ * Heavily inspired through https://github.com/grantjames/metronome/blob/master/metronome.js
+ */
 export class Metronome {
   audioCtx: AudioContext;
   tempo: number;
@@ -18,7 +22,8 @@ export class Metronome {
   beatsPerBar: number;
   currentBeatInBar: number;
   isRunning: boolean;
-  
+  emphasizedBeats: number[];
+
   onTick?: (data: OnMetronomeTickProps) => unknown;
 
   private intervalId: string | number | NodeJS.Timeout | undefined;
@@ -38,6 +43,7 @@ export class Metronome {
     this.isRunning = false;
     this.lookahead = 25; // milliseconds scheduling frequency (like timer resolution)
     this.scheduleAheadTime = 0.1; // seconds
+    this.emphasizedBeats = options?.emphasizedBeats || [1];
   }
 
   private nextNote() {
@@ -52,18 +58,23 @@ export class Metronome {
   }
 
   private scheduleNote(beatNumber: number, time: number) {
-    const note = { note: beatNumber, beatNumber: beatNumber, beatsPerBar: this.beatsPerBar, time: time };
+    const note = {
+      note: beatNumber,
+      beatNumber: beatNumber,
+      beatsPerBar: this.beatsPerBar,
+      time: time,
+    };
     // push the note on the queue, even if we're not playing.
     this.noteQueue.push(note);
 
     if (this.onTick) this.onTick(note);
-    console.log('pushed note', {metronome: this});
-    
+    console.log("pushed note", { metronome: this });
+
     // create an oscillator
     const osc = this.audioCtx.createOscillator();
     const envelope = this.audioCtx.createGain();
-    
-    osc.frequency.value = (beatNumber % this.beatsPerBar == 0) ? 1000 : 800;
+
+    osc.frequency.value = beatNumber % this.beatsPerBar == 0 ? 1000 : 800;
     envelope.gain.value = 1;
     envelope.gain.exponentialRampToValueAtTime(1, time + 0.001);
     envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
@@ -76,7 +87,10 @@ export class Metronome {
   }
 
   private scheduler() {
-    while(this.nextNoteTime < this.audioCtx.currentTime + this.scheduleAheadTime) {
+    while (
+      this.nextNoteTime <
+      this.audioCtx.currentTime + this.scheduleAheadTime
+    ) {
       this.scheduleNote(this.currentBeatInBar, this.nextNoteTime);
       this.nextNote();
     }
