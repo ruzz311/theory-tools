@@ -1,8 +1,12 @@
-import { Circle } from "@mui/icons-material";
-import { Box, Button, TextField } from "@mui/material";
+import { PlayArrow, Square } from "@mui/icons-material";
+import { Box, Button, Grid, TextField, useMediaQuery } from "@mui/material";
+import { Theme } from "@mui/system";
 import { useEffect, useState } from "react";
+
 import { useAudioCtx } from "../../util/AudioProvider";
+import { getSessionStoreNumber } from "../../util/utils";
 import { Metronome, OnMetronomeTickProps } from "./Metronome";
+import MetronomeDots from "./MetronomeDots.component";
 
 /**
  * Display a guitar head stock and allow click/touch to play each note.
@@ -12,20 +16,26 @@ import { Metronome, OnMetronomeTickProps } from "./Metronome";
 export default function MetronomeComponent() {
   const BPM_VAL_SESSION_KEY = "metronome.bpm";
   const BEATS_VAL_SESSION_KEY = "metronome.beatsInBar";
-
-  const { audioCtx } = useAudioCtx();
   const [bpm, setBpm] = useState(
-    Number(sessionStorage.getItem(BPM_VAL_SESSION_KEY) || 120)
+    getSessionStoreNumber(BPM_VAL_SESSION_KEY, 120)
   );
   const [beatsPerBar, setBeatsPerBar] = useState(
-    Number(sessionStorage.getItem(BEATS_VAL_SESSION_KEY) || 4)
+    getSessionStoreNumber(BEATS_VAL_SESSION_KEY, 4)
   );
   const [data, setData] = useState<OnMetronomeTickProps>();
   const [isRunning, setIsRunning] = useState(false);
+  const [accentBeats, setAccentBeats] = useState<number[]>([]);
+  const { audioCtx } = useAudioCtx();
   const [metronome] = useState(
-    new Metronome(bpm, { beatsPerBar, audioCtx, onTick: setData })
+    new Metronome(bpm, { beatsPerBar, audioCtx, accentBeats, onTick: setData })
   );
 
+  // For Responsive Layout
+  const matchesMd = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
+  const matchesLg = useMediaQuery((theme: Theme) => theme.breakpoints.up("lg"));
+  const inputSize = matchesMd ? (matchesLg ? undefined : "medium") : "small";
+
+  // Actions
   function handleToggleClick() {
     isRunning ? metronome.stop() : metronome.start();
     setIsRunning(!isRunning);
@@ -43,6 +53,20 @@ export default function MetronomeComponent() {
     setBeatsPerBar(newBeatsPerBar);
   }
 
+  // Set the accent beats on the metronome object and in react state.
+  // adds or removes the beat based on its existance in the accentBeats array.
+  function handleBeatDotClick(beatNumber: number) {
+    const foundIndex = accentBeats.indexOf(beatNumber, 0);
+    let newBeats = [...accentBeats];
+    if (foundIndex > -1) {
+      newBeats.splice(foundIndex, 1);
+    } else {
+      newBeats.push(beatNumber);
+    }
+    metronome.accentBeats = newBeats;
+    setAccentBeats(newBeats);
+  }
+
   // Stop the metronome on component unload
   useEffect(() => () => metronome.stop(), []);
 
@@ -53,71 +77,57 @@ export default function MetronomeComponent() {
       noValidate={false}
       sx={{ mt: 1 }}
     >
-      <TextField
-        margin="normal"
-        required
-        id="bpm"
-        label="BPM"
-        name="bpm"
-        type="number"
-        size="small"
-        autoFocus
-        onChange={(e) => handleBPMChange(Number(e.currentTarget.value))}
-        value={bpm}
-      />
-      {/* <BpmInput val={bpm} onChange={handleBPMChange}/> */}
-      <TextField
-        margin="normal"
-        required
-        name="beatsPerBar"
-        label="Beats in bar"
-        type="number"
-        id="beatsPerBar"
-        size="small"
-        value={beatsPerBar}
-        onChange={(e) => handleBeatsInBarChange(Number(e.currentTarget.value))}
-      />
-      <MetronomeDot
-        beatsPerBar={beatsPerBar}
-        currentBeatInBar={data?.beatNumber || 0}
-      />
+      <Grid container spacing={2}>
+        <Grid item xs={6}>
+          <TextField
+            autoFocus
+            fullWidth
+            required
+            id="bpm"
+            label="BPM"
+            name="bpm"
+            margin="normal"
+            size={inputSize}
+            type="number"
+            value={bpm}
+            inputProps={{ sx: {fontSize: matchesMd ? 100 : 50 }}}
+            // InputLabelProps={{sx: {fontSize: 20}}}
+            onChange={(e) => handleBPMChange(Number(e.currentTarget.value))}
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            fullWidth
+            required
+            id="beatsPerBar"
+            name="beatsPerBar"
+            label="Beats in bar"
+            type="number"
+            margin="normal"
+            size={inputSize}
+            value={beatsPerBar}
+            inputProps={{ sx: {fontSize: matchesMd ? 100 : 50 }}}
+            onChange={(e) =>
+              handleBeatsInBarChange(Number(e.currentTarget.value))
+            }
+          />
+        </Grid>
+      </Grid>
       <Button
         type="submit"
         fullWidth
         variant="contained"
         onClick={handleToggleClick}
-        sx={{ mt: 2, mb: 2 }}
+        sx={{ mt: 2, mb: 2, fontSize: matchesMd ? 100 : undefined }}
       >
-        {isRunning ? "Stop" : "Start"}
+        {isRunning ? <Square/> : <PlayArrow/>}
       </Button>
-    </Box>
-  );
-}
-
-interface MetronomeDotProps {
-  beatsPerBar: number;
-  currentBeatInBar: number;
-}
-
-function MetronomeDot({ beatsPerBar, currentBeatInBar }: MetronomeDotProps) {
-  const dots = [...Array(beatsPerBar).keys()].map((beat) => {
-    const isActive = beat === currentBeatInBar;
-    const dotColor = isActive ? "primary" : "secondary";
-    
-    return <Circle color={dotColor} key={`metronome_beat_${beat}`} />;
-  });
-
-  return (
-    <Box
-      sx={{
-        marginTop: 0,
-        display: "flex",
-        flexDirection: "row",
-        flexGrow: 1,
-        alignItems: "center",
-      }}
-    >
-      {dots}
+      <MetronomeDots
+        beatsPerBar={beatsPerBar}
+        currentBeatInBar={data?.beatNumber || 0}
+        accentBeats={accentBeats}
+        onClick={handleBeatDotClick}
+      />
     </Box>
   );
 }
