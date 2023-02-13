@@ -15,12 +15,80 @@
  *
  */
 
-import { noteToFrequency } from 'music-fns';
-import * as teoria from 'teoria';
-import { Note } from 'teoria';
-import { createGuitarStrings, IGuitarStrings } from './AudioProcessor-bkup';
+import { noteToFrequency } from "music-fns";
+import * as teoria from "teoria";
+import { Note } from "teoria";
+
+export interface INote {
+  noteName: string;
+  freq: number;
+  offset: number;
+  difference: number;
+}
+
+export interface IGuitarStrings {
+  // e2: INote;
+  // a2: INote;
+  // d3: INote;
+  // g3: INote;
+  // b3: INote;
+  // e4: INote;
+  [key: string]: INote;
+}
 
 export const TUNING_PITCH = 440;
+
+export const tunings: Record<string, string[]> = {
+  standard: ["e2", "a2", "d3", "g3", "b3", "e4"],
+  drop_d: ["d2", "a2", "d3", "g3", "b3", "e4"],
+  seven_string_standard: ["f#2", "b2", "e2", "a2", "d3", "g3", "b3", "e4"],
+};
+
+/**
+ * Create a note object useable with the tuner.  Uses global standard tuning pitch.
+ *
+ * @param sampleRate
+ * @param noteName a valid note name such as 'e3' or 'Bb5'
+ * @returns
+ */
+const createNote: (
+  sampleRate: number,
+  noteName: string,
+  tuningPitch?: number
+) => INote = (sampleRate, noteName, tuningPitch = TUNING_PITCH) => {
+  const freq = noteToFrequency(noteName, { standard: tuningPitch });
+  return {
+    noteName,
+    freq,
+    offset: Math.round(sampleRate / freq),
+    difference: 0,
+  };
+};
+
+/**
+ * Creates an object containing notes for a specific 6 string guitar tuning.
+ * If a tuning name isn't provided or reccognized, standard tuning is used.
+ *
+ * @param sampleRate
+ * @param tuningName defaults to 'standard' but acccepts ('standard', 'drop_d');
+ * @returns
+ */
+export const createGuitarStrings: (
+  sampleRate: number,
+  tuningName?: string
+) => IGuitarStrings = (sampleRate, tuningName = "standard") => {
+  let chosen = tunings[tuningName] ? tunings[tuningName] : tunings["standard"];
+
+  const strings = chosen.reduce(
+    (prev, noteName, i) => ({
+      ...prev,
+      [noteName]: createNote(sampleRate, noteName),
+    }),
+    {} as IGuitarStrings
+  );
+
+  return strings;
+};
 
 /**
  * Takes the audio from getUserMedia and processes it to figure out how well
@@ -35,16 +103,11 @@ export interface IAudioDataParams {
   note: Note;
   cents: number;
   noteName: string;
-};
-
-type IOnAudioDataHook = (data: IAudioDataParams) => void
-
-interface IAudioProcessorArgs {
-  onAudioData?: IOnAudioDataHook
-  audioContext?: AudioContext
 }
 
-class AudioProcessor {
+type IOnAudioDataHook = (data: IAudioDataParams) => void;
+
+export default class AudioProcessor {
   FFTSIZE: number;
   stream: MediaStream | null;
   audioContext: AudioContext;
@@ -62,7 +125,10 @@ class AudioProcessor {
   sendingAudioData: boolean;
   onAudioData?: IOnAudioDataHook;
 
-  constructor(options: IAudioProcessorArgs) {
+  constructor(options: {
+    onAudioData?: IOnAudioDataHook;
+    audioContext?: AudioContext;
+  }) {
     // Defer normal constructor behavior to created because we're only
     // allowed to take the prototype with us from the class.
     // Polymer(AudioProcessor.prototype);
@@ -99,7 +165,8 @@ class AudioProcessor {
     // Bind as we would have done for anything in the constructor so we can use
     // them without confusing what 'this' means. Yay window scoped.
     this.dispatchAudioData = this.dispatchAudioData.bind(this);
-    this.sortStringKeysByDifference = this.sortStringKeysByDifference.bind(this);
+    this.sortStringKeysByDifference =
+      this.sortStringKeysByDifference.bind(this);
     this.onVisibilityChange = this.onVisibilityChange.bind(this);
   }
 
@@ -114,7 +181,7 @@ class AudioProcessor {
       this.gainNode.connect(this.audioContext.destination);
       requestAnimationFrame(this.dispatchAudioData);
     } catch (err) {
-      alert('Unable to access the microphone');
+      alert("Unable to access the microphone");
       console.error(err);
     }
   }
@@ -124,13 +191,13 @@ class AudioProcessor {
    */
   attached() {
     // Set up the stream kill / setup code for visibility changes.
-    document.addEventListener('visibilitychange', this.onVisibilityChange);
+    document.addEventListener("visibilitychange", this.onVisibilityChange);
     // Then call it.
     this.onVisibilityChange();
   }
 
   /**
-   * detached is exectued before removing the dom for this class. 
+   * detached is exectued before removing the dom for this class.
    */
   detached() {
     this.sendingAudioData = false;
@@ -138,24 +205,20 @@ class AudioProcessor {
     if (this.stream) {
       console.log(`detaching from stream...`);
       // Chrome 47+
-      this.stream
-        .getAudioTracks()
-        .forEach((track: MediaStreamTrack) => {
-          if ('stop' in track) {
-            track.stop();
-          }
-        });
+      this.stream.getAudioTracks().forEach(track => {
+        if ("stop" in track) {
+          track.stop();
+        }
+      });
 
       // Chrome 46-
-      if ('stop' in this.stream) {
-        // @ts-ignore
-        this.stream.stop();
+      if ("stop" in this.stream) {
+        (this.stream as MediaStream & { stop: () => void }).stop();
       }
     }
 
     this.stream = null;
-    document.removeEventListener('visibilitychange', this.onVisibilityChange);
-
+    document.removeEventListener("visibilitychange", this.onVisibilityChange);
     console.log(`detached from stream!`);
   }
 
@@ -169,18 +232,15 @@ class AudioProcessor {
 
       if (this.stream) {
         // Chrome 47+
-        this.stream
-          .getAudioTracks()
-          .forEach((track: MediaStreamTrack) => {
-            if ('stop' in track) {
-              track.stop();
-            }
-          });
+        this.stream.getAudioTracks().forEach(track => {
+          if ("stop" in track) {
+            track.stop();
+          }
+        });
 
         // Chrome 46-
-        if ('stop' in this.stream) {
-          // @ts-ignore
-          this.stream.stop();
+        if ("stop" in this.stream) {
+          (this.stream as MediaStream & { stop: () => void }).stop();
         }
       }
 
@@ -192,13 +252,13 @@ class AudioProcessor {
 
   /**
    * Compare this.strings by the this.strings.difference value.
-   * 
+   *
    * @param a a string value matching one of keyof IGuitarStrings
    * @param b a string value matching one of keyof IGuitarStrings
-   * @returns 
+   * @returns
    */
   sortStringKeysByDifference(a: string, b: string) {
-    return (this.strings[a])?.difference - this.strings[b]?.difference;
+    return this.strings[a]?.difference - this.strings[b]?.difference;
   }
 
   /**
@@ -210,15 +270,14 @@ class AudioProcessor {
   // @ts-ignore
   autocorrelateAudioData(time) {
     let searchSize = this.frequencyBufferLength * 0.5;
-    let sampleRate = this.audioContext.sampleRate;
     let offsetKey: keyof IGuitarStrings | null = null;
     let offset = 0;
     let difference = 0;
-    let tolerance = 0.001;
+    const tolerance = 0.001;
     let rms = 0;
-    let rmsMin = 0.008;
+    const rmsMin = 0.008;
     let assessedStringsInLastFrame = this.assessedStringsInLastFrame;
-    let ASSESSMENT_RATE = 250
+    const ASSESSMENT_RATE = 250;
 
     // Fill up the data.
     this.analyser.getFloatTimeDomainData(this.frequencyBuffer);
@@ -232,8 +291,7 @@ class AudioProcessor {
     rms = Math.sqrt(rms / this.frequencyBuffer.length);
 
     // If there's little signal in the buffer quit out.
-    if (rms < rmsMin)
-      return 0;
+    if (rms < rmsMin) return 0;
 
     // Only check for a new string if the volume goes up. Otherwise assume
     // that the string is the same as the last frame.
@@ -260,8 +318,9 @@ class AudioProcessor {
         // step through for this string comparing it to a
         // "perfect wave" for this string.
         for (let i = 0; i < searchSize; i++) {
-          difference += Math.abs(this.frequencyBuffer[i] -
-            this.frequencyBuffer[i + offset]);
+          difference += Math.abs(
+            this.frequencyBuffer[i] - this.frequencyBuffer[i + offset]
+          );
         }
 
         difference /= searchSize;
@@ -270,17 +329,18 @@ class AudioProcessor {
         // less preferential treatment (higher offset values). This
         // is because harmonics can mess things up nicely, so we
         // course correct a little bit here.
-        this.strings[offsetKey].difference += (difference * offset);
+        this.strings[offsetKey].difference += difference * offset;
       }
-
     } else {
       this.assessedStringsInLastFrame = false;
     }
 
     // If this is the first frame where we've not had to reassess strings
     // then we will order by the string with the largest number of matches.
-    if (assessedStringsInLastFrame === true &&
-      this.assessedStringsInLastFrame === false) {
+    if (
+      assessedStringsInLastFrame === true &&
+      this.assessedStringsInLastFrame === false
+    ) {
       this.stringsKeys.sort(this.sortStringKeysByDifference);
     }
 
@@ -289,10 +349,11 @@ class AudioProcessor {
     // We'll do it by making a full sweep from offset - 10 -> offset + 10
     // and seeing exactly how long it takes for this wave to repeat itself.
     // And that will be our *actual* frequency.
-    let searchRange = 10;
-    let assumedString = this.strings[this.stringsKeys[0] as keyof IGuitarStrings];
-    let searchStart = assumedString.offset - searchRange;
-    let searchEnd = assumedString.offset + searchRange;
+    const searchRange = 10;
+    const assumedString =
+      this.strings[this.stringsKeys[0] as keyof IGuitarStrings];
+    const searchStart = assumedString.offset - searchRange;
+    const searchEnd = assumedString.offset + searchRange;
     let actualFrequency = assumedString.offset;
     let smallestDifference = Number.POSITIVE_INFINITY;
 
@@ -308,8 +369,9 @@ class AudioProcessor {
       //
       // A better version of this would be to curve match on the data.
       for (let i = 0; i < searchSize; i++) {
-        difference += Math.abs(this.frequencyBuffer[i] -
-          this.frequencyBuffer[i + s]);
+        difference += Math.abs(
+          this.frequencyBuffer[i] - this.frequencyBuffer[i + s]
+        );
       }
 
       difference /= searchSize;
@@ -332,20 +394,17 @@ class AudioProcessor {
 
   // @ts-ignore
   dispatchAudioData(time) {
-
     // Always set up the next pass here, because we could
     // early return from this pass if there's not a lot
     // of exciting data to deal with.
-    if (this.sendingAudioData)
-      requestAnimationFrame(this.dispatchAudioData);
+    if (this.sendingAudioData) requestAnimationFrame(this.dispatchAudioData);
 
     const frequency = this.autocorrelateAudioData(time);
 
-    if (frequency === 0)
-      return;
+    if (frequency === 0) return;
 
-    const {cents, note} = teoria.note.fromFrequency(frequency, TUNING_PITCH);
-    
+    const { cents, note } = teoria.note.fromFrequency(frequency, TUNING_PITCH);
+
     const dataOutput: IAudioDataParams = {
       frequency: note.fq(),
       octave: note.octave(),
@@ -358,5 +417,3 @@ class AudioProcessor {
     if (this.onAudioData) this.onAudioData(dataOutput);
   }
 }
-
-export default AudioProcessor;
