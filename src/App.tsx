@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { deepmerge } from '@mui/utils';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
 
 // Layout
 import Layout from './components/Layout';
@@ -20,7 +19,7 @@ import PublicPage from './pages/Public';
 import ProtectedPage from './pages/Protected';
 
 export default function App() {
-  const [uiMode, setUIMode] = useState(getSystemUiMode);
+  const [uiMode, setUIMode] = useState(getSystemUiMode());
   const t = useMemo(
     () => createTheme(deepmerge(themeOptions, { palette: { mode: uiMode } })),
     [themeOptions, uiMode]
