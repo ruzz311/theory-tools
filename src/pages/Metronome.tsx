@@ -2,7 +2,7 @@ import React from "react";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import CssBaseline from "@mui/material/CssBaseline";
-import MetronomeComponent from "../components/metronome/Metrnome.component";
+import MetronomeComponent from "../components/metronome/Metronome.component";
 import { Theme, useMediaQuery } from "@mui/material";
 
 export default function Metronome() {
