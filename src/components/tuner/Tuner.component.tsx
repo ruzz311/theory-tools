@@ -1,13 +1,12 @@
 
 import React, { useEffect, useState } from "react";
 
-import AudioProcessor, { IAudioDataParams } from "../util/AudioProcessor";
-import { useAudioCtx } from '../util/AudioProvider';
+import AudioProcessor, { IAudioDataParams } from "../../util/AudioProcessor";
+import { useAudioCtx } from '../../util/AudioProvider';
 
 export default function Tuner() {
   const { audioCtx } = useAudioCtx();
   const [ad, setAudioData] = useState<IAudioDataParams>();
-  //{ frequency: 0, octave: 0, note: teoria.note('A4'), noteName: 'A4' }
   let ap:AudioProcessor;
 
   // create an audioProcessor.
@@ -22,9 +21,7 @@ export default function Tuner() {
   }
 
   // clean up audio when "onComponentWillUnmount"
-  useEffect(() => () => {
-    ap.detached();
-  })
+  useEffect(() => () => ap.detached());
 
   return <pre style={{
       width: '100%',
