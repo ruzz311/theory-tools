@@ -9,7 +9,7 @@ declare module "teoria" {
   }
 
   export class Chord {
-    constructor(root: any, name: any);
+    constructor(root: string | Note, name: string);
 
     bass(): any;
 
@@ -98,9 +98,11 @@ declare module "teoria" {
 
     chord(chord: any): Chord;
 
-    chroma(): number;
+    // 0 = 'C' ... 11 = 'B'
+    chroma(): 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | number;
 
-    durationInSeconds(bpm: number, beatUnit: any): number;
+    // beatUnit = denominator in the time signature
+    durationInSeconds(bpm: number, beatUnit: number): number;
 
     durationName(): string;
 
@@ -139,9 +141,9 @@ declare module "teoria" {
 
     static fromKey(key: number): Note;
 
-    static fromMIDI(note: any): Note;
+    static fromMIDI(note: number): Note;
 
-    static fromString(name: any, dur: any): Note;
+    static fromString(name: name, dur: Duration): Note;
   }
 
   export class Scale {
@@ -150,8 +152,8 @@ declare module "teoria" {
     name?: string;
     
     tonic: Note
-
-    get(i: string | number): Interval;
+ 
+    get(i: number | 'unison' | 'first' | 'second' | 'third' | 'fourth' | 'fifth' | 'sixth' | 'seventh' | 'octave' | 'ninth' | 'eleventh' | 'thirteenth'): Interval;
 
     // TODO: does this exist?
     interval(interval: Interval | Note | string): Interval;
@@ -189,7 +191,7 @@ declare module "teoria" {
 
   export function interval(from: any, to: any): Interval;
 
-  export function note(name: any, duration: Duration): Note;
+  export function note(name: string | string[], duration?: Duration): Note;
 
   export function scale(tonic: string | Note, scale: Scale |string | number[]): Scale;
 
